@@ -1,18 +1,21 @@
 #include "UI_Interface.h"
 
-namespace {
 
-  // We can set a minimum version of tango for our application
-  constexpr int kTangoCoreMinimumVersion = 9377;
+// We can set a minimum version of tango for our application
+constexpr int kTangoCoreMinimumVersion = 9377;
 
-  // prints to logcat the current cloud point data
-  void onPoseAvailable(void*, const TangoPoseData* pose) {
-    LOGI("Position: %f, %f, %f. Orientation: %f, %f, %f, %f",
-         pose->translation[0], pose->translation[1], pose->translation[2],
-         pose->orientation[0], pose->orientation[1], pose->orientation[2],
-         pose->orientation[3]);
-  }
-}  // anonymous namespace.
+double* lastPoseData;
+
+// prints to logcat the current cloud point data
+void onPoseAvailable(void*, const TangoPoseData* pose) {
+  memcpy(lastPoseData, &(pose->translation), 3*sizeof(double));
+  memcpy(lastPoseData + 3, &(pose->orientation), 4*sizeof(double));
+}
+
+double* GetPosition() {
+  return lastPoseData;
+}
+
 
 namespace UI {
 
@@ -29,6 +32,8 @@ namespace UI {
       LOGE("UI_Interface::CheckVersion, Tango Core version is out of date.");
       std::exit(EXIT_SUCCESS);
     }
+
+    lastPoseData = (double*)malloc(7 * sizeof(double));
   }
 
   void UI_Interface::OnTangoServiceConnected(JNIEnv* env, jobject iBinder) {
@@ -66,5 +71,7 @@ namespace UI {
     TangoConfig_free(tango_config_);
     tango_config_ = nullptr;
     TangoService_disconnect();
+    free(lastPoseData);
   }
+
 }  // namespace UI

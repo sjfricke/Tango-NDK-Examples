@@ -5,12 +5,16 @@ import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 
 /**
  * This activity is responsible to hooking to the android lifecycle events to
  * native code code which calls into Tango C API.
  */
-public class MainActivity extends Activity {
+public class MainActivity extends Activity  {
 
     // Tango Service connection.
     ServiceConnection mTangoServiceConnection = new ServiceConnection() {
@@ -31,6 +35,9 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         TangoJniNative.onCreate(this);
+
+        Button GetPosition_btn = (Button)findViewById(R.id.Position_Button);
+        GetPosition_btn.setOnClickListener(getPostionListener);
     }
 
     @Override
@@ -47,5 +54,22 @@ public class MainActivity extends Activity {
         TangoJniNative.onPause();
         unbindService(mTangoServiceConnection);
     }
+
+    double[] poseData = new double[7];
+
+    private View.OnClickListener getPostionListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+
+            poseData = TangoJniNative.getPosition();
+
+            TextView displayText = (TextView)findViewById(R.id.display_text);
+            String poseText = String.format("Position\n X: %.3f\nY: %.3f\nZ: %.3f\n\nOrientation\nX: %.3f\nY: %.3f\nZ: %.3f\nW: %.3f",
+                    poseData[0], poseData[1], poseData[2],
+                    poseData[3], poseData[4], poseData[5], poseData[6]);
+            displayText.setText(poseText);
+        }
+    };
+
 
 }

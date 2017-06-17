@@ -8,12 +8,16 @@
 #include "tango_support_api.h"  // NOLINT
 
 #include <cstdlib>
+#include <algorithm> // std::copy
+
 
 // used to get logcat outputs which can be regex filtered by the LOG_TAG we give
 // So in Logcat you can filter this example by putting Tutorial_TAG
 #define LOG_TAG "UI_Interface"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+
+double* GetPosition();
 
 namespace UI {
 

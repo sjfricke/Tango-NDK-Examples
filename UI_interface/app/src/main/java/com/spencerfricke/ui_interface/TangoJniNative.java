@@ -43,4 +43,6 @@ public class TangoJniNative {
      */
     public static native void onPause();
 
+    public static native double[] getPosition();
+
 }

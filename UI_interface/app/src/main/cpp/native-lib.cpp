@@ -33,6 +33,35 @@ Java_com_spencerfricke_ui_1interface_TangoJniNative_onPause(
   app.OnPause();
 }
 
+JNIEXPORT jdoubleArray JNICALL
+Java_com_spencerfricke_ui_1interface_TangoJniNative_getPosition(
+    JNIEnv* env, jobject) {
+
+  jdoubleArray result;
+  result = env->NewDoubleArray(7);
+  if (result == NULL) {
+    return NULL; /* out of memory error thrown */
+  }
+
+  double* poseData = GetPosition();
+  // fill a temp structure to use to populate the java int array
+  jdouble fill[7] = {
+      poseData[0],
+      poseData[1],
+      poseData[2],
+      poseData[3],
+      poseData[4],
+      poseData[5],
+      poseData[6],
+  };
+
+  // move from the temp structure to the java structure
+  env->SetDoubleArrayRegion(result, 0, 7, fill);
+  return result;
+  //app.OnPause();
+}
+
+
 #ifdef __cplusplus
 }
 #endif
