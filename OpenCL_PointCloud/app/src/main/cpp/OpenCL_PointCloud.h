@@ -1,5 +1,5 @@
-#ifndef UI_INTERFACE_UI_INTERFACE_H
-#define UI_INTERFACE_UI_INTERFACE_H
+#ifndef OPENCL_POINTCLOUD_OPENCL_POINTCLOUD_H
+#define OPENCL_POINTCLOUD_OPENCL_POINTCLOUD_H
 
 #include <android/log.h>
 #include <jni.h>
@@ -11,24 +11,22 @@
 
 // used to get logcat outputs which can be regex filtered by the LOG_TAG we give
 // So in Logcat you can filter this example by putting Tutorial_TAG
-#define LOG_TAG "UI_Interface"
+#define LOG_TAG "OpenCL_PC"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
-double* GetPosition();
-
-namespace UI {
+namespace PC {
 
   // TangoHandler provides functionality to communicate with the Tango Service.
-  class UI_Interface {
+  class OpenCL_PointCloud {
   public:
-    UI_Interface() : tango_config_(nullptr) {}
+    OpenCL_PointCloud() : tango_config_(nullptr) {}
 
-    UI_Interface(const UI_Interface& other) = delete;
+    OpenCL_PointCloud(const OpenCL_PointCloud& other) = delete;
 
-    UI_Interface& operator=(const UI_Interface& other) = delete;
+    OpenCL_PointCloud& operator=(const OpenCL_PointCloud& other) = delete;
 
-    ~UI_Interface() {
+    ~OpenCL_PointCloud() {
       if (tango_config_ != nullptr) {
         TangoConfig_free(tango_config_);
         tango_config_ = nullptr;
@@ -55,6 +53,8 @@ namespace UI {
   private:
     TangoConfig tango_config_;
   };
-}  // namespace UI
 
-#endif //UI_INTERFACE_UI_INTERFACE_H
+}  // namespace PC
+
+
+#endif //OPENCL_POINTCLOUD_OPENCL_POINTCLOUD_H
