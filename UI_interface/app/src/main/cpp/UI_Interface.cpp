@@ -1,6 +1,5 @@
 #include "UI_Interface.h"
 
-
 // We can set a minimum version of tango for our application
 constexpr int kTangoCoreMinimumVersion = 9377;
 

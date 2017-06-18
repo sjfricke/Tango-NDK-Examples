@@ -6,14 +6,19 @@
 
 #include "tango_client_api.h"   // NOLINT
 #include "tango_support_api.h"  // NOLINT
+#include <CL/cl.hpp>
 
 #include <cstdlib>
+#include <vector>
+#include <string>
 
 // used to get logcat outputs which can be regex filtered by the LOG_TAG we give
 // So in Logcat you can filter this example by putting Tutorial_TAG
 #define LOG_TAG "OpenCL_PC"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+
+#define __CL_ENABLE_EXCEPTIONS
 
 namespace PC {
 
@@ -50,8 +55,25 @@ namespace PC {
     // Disconnect and stop Tango service.
     void OnPause();
 
+    void runOpenCL();
+
   private:
     TangoConfig tango_config_;
+
+    // Compute c = a + b.
+    static const char source[] =
+            "kernel void add(\n"
+            "       ulong n,\n"
+            "       global const double *a,\n"
+            "       global const double *b,\n"
+            "       global double *c\n"
+            "       )\n"
+            "{\n"
+            "    size_t i = get_global_id(0);\n"
+            "    if (i < n) {\n"
+            "       c[i] = a[i] + b[i];\n"
+            "    }\n"
+            "}\n";
   };
 
 }  // namespace PC

@@ -63,4 +63,94 @@ namespace PC {
     TangoService_disconnect();
   }
 
+  void OpenCL_PointCloud::runOpenCL() {
+    const size_t N = 1 << 20;
+    try {
+      // Get list of OpenCL platforms.
+      std::vector<cl::Platform> platform;
+      cl::Platform::get(&platform);
+
+      if (platform.empty()) {
+        LOGE("OpenCL platforms not found.");
+        return;
+      }
+
+      // Get first available GPU device which supports double precision.
+      cl::Context context;
+      std::vector<cl::Device> device;
+      for(auto p = platform.begin(); device.empty() && p != platform.end(); p++) {
+        std::vector<cl::Device> pldev;
+
+        try {
+          p->getDevices(CL_DEVICE_TYPE_GPU, &pldev);
+
+          for(auto d = pldev.begin(); device.empty() && d != pldev.end(); d++) {
+            if (!d->getInfo<CL_DEVICE_AVAILABLE>()) continue;
+
+            std::string ext = d->getInfo<CL_DEVICE_EXTENSIONS>();
+
+            device.push_back(*d);
+            context = cl::Context(device);
+          }
+        } catch(...) {
+          device.clear();
+        }
+      }
+
+      if (device.empty()) {
+        LOGE("OpenCL GPUs with double precision not found.");
+      }
+
+      LOGI("OpenCL Device: %s", device[0].getInfo<CL_DEVICE_NAME>());
+
+      // Create command queue.
+      cl::CommandQueue queue(context, device[0]);
+
+      // Compile OpenCL program for found device.
+      cl::Program program(context, cl::Program::Sources(
+          1, std::make_pair(source, strlen(source))
+      ));
+
+      try {
+        program.build(device);
+      } catch (const cl::Error&) {
+        LOGE("OpenCL compilation error\n %s",program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device[0]));
+      }
+
+      cl::Kernel add(program, "add");
+
+      // Prepare input data.
+      std::vector<double> a(N, 1);
+      std::vector<double> b(N, 2);
+      std::vector<double> c(N);
+
+      // Allocate device buffers and transfer input data to device.
+      cl::Buffer A(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                   a.size() * sizeof(double), a.data());
+
+      cl::Buffer B(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                   b.size() * sizeof(double), b.data());
+
+      cl::Buffer C(context, CL_MEM_READ_WRITE,
+                   c.size() * sizeof(double));
+
+      // Set kernel parameters.
+      add.setArg(0, static_cast<cl_ulong>(N));
+      add.setArg(1, A);
+      add.setArg(2, B);
+      add.setArg(3, C);
+
+      // Launch kernel on the compute device.
+      queue.enqueueNDRangeKernel(add, cl::NullRange, N, cl::NullRange);
+
+      // Get result back to host.
+      queue.enqueueReadBuffer(C, CL_TRUE, 0, c.size() * sizeof(double), c.data());
+
+      // Should get '3' here.
+      LOGI("OpenCL Should be 3: %f", c[42]);
+    } catch (const cl::Error &err) {
+      LOGE("OpenCL error: %s\n%s", err.what() , err.err());
+    }
+  }
+
 }  // namespace PC

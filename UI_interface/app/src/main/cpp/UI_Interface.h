@@ -8,6 +8,7 @@
 #include "tango_support_api.h"  // NOLINT
 
 #include <cstdlib>
+#include <string>
 
 // used to get logcat outputs which can be regex filtered by the LOG_TAG we give
 // So in Logcat you can filter this example by putting Tutorial_TAG
