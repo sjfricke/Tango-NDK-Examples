@@ -30,6 +30,7 @@ public class MainActivity extends Activity  {
         }
     };
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,6 +39,12 @@ public class MainActivity extends Activity  {
 
         Button GetPosition_btn = (Button)findViewById(R.id.Position_Button);
         GetPosition_btn.setOnClickListener(getPostionListener);
+
+        Button GetFrameImage_btn = (Button)findViewById(R.id.Image_Frame);
+        GetFrameImage_btn.setOnClickListener(getFrameImageListener);
+
+        Button GetPointCloud_btn = (Button)findViewById(R.id.Point_Cloud);
+        GetPointCloud_btn.setOnClickListener(getPointCloudListener);
     }
 
     @Override
@@ -64,12 +71,39 @@ public class MainActivity extends Activity  {
             poseData = TangoJniNative.getPosition();
 
             TextView displayText = (TextView)findViewById(R.id.display_text);
-            String poseText = String.format("Position\n X: %.3f\nY: %.3f\nZ: %.3f\n\nOrientation\nX: %.3f\nY: %.3f\nZ: %.3f\nW: %.3f",
+            String poseText = String.format("Position\n X: %.3f\nY: %.3f\nZ: %.3f\n\n" +
+                                            "Orientation\nX: %.3f\nY: %.3f\nZ: %.3f\nW: %.3f",
                     poseData[0], poseData[1], poseData[2],
                     poseData[3], poseData[4], poseData[5], poseData[6]);
             displayText.setText(poseText);
         }
     };
 
+    long[] frameData = new long[5];
+
+    private View.OnClickListener getFrameImageListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+
+            frameData = TangoJniNative.getFrameImage();
+
+            TextView displayText = (TextView)findViewById(R.id.display_text);
+            String frameText = String.format("Height: %d\nWidth: %d\nStride: %d\nExposure Duration: %d ns\nFrame Number: %d",
+                    frameData[0], frameData[1], frameData[2], frameData[3], frameData[4]);
+            displayText.setText(frameText);
+        }
+    };
+
+    private View.OnClickListener getPointCloudListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+
+            int pointCloudData = TangoJniNative.getPointCloud();
+
+            TextView displayText = (TextView)findViewById(R.id.display_text);
+            String frameText = String.format("Point Cloud Count: %d", pointCloudData);
+            displayText.setText(frameText);
+        }
+    };
 
 }

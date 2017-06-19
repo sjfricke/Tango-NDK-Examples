@@ -45,4 +45,8 @@ public class TangoJniNative {
 
     public static native double[] getPosition();
 
+    public static native long[] getFrameImage();
+
+    public static native int getPointCloud();
+
 }

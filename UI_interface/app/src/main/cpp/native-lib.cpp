@@ -44,7 +44,8 @@ Java_com_spencerfricke_ui_1interface_TangoJniNative_getPosition(
   }
 
   double* poseData = GetPosition();
-  // fill a temp structure to use to populate the java int array
+
+  // fill a temp structure to use to populate the java double array
   jdouble fill[7] = {
       poseData[0],
       poseData[1],
@@ -58,9 +59,39 @@ Java_com_spencerfricke_ui_1interface_TangoJniNative_getPosition(
   // move from the temp structure to the java structure
   env->SetDoubleArrayRegion(result, 0, 7, fill);
   return result;
-  //app.OnPause();
 }
 
+JNIEXPORT jlongArray JNICALL
+Java_com_spencerfricke_ui_1interface_TangoJniNative_getFrameImage(
+    JNIEnv* env, jobject) {
+
+  jlongArray result;
+  result = env->NewLongArray(5);
+  if (result == NULL) {
+    return NULL; /* out of memory error thrown */
+  }
+
+  long* frameData = GetFrameImage();
+
+  jlong fill[5] = {
+      frameData[0],
+      frameData[1],
+      frameData[2],
+      frameData[3],
+      frameData[4]
+  };
+
+  env->SetLongArrayRegion(result, 0, 5, fill);
+  return result;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_spencerfricke_ui_1interface_TangoJniNative_getPointCloud(
+    JNIEnv* env, jobject) {
+
+  jint result = GetPointCloud();
+  return result;
+}
 
 #ifdef __cplusplus
 }

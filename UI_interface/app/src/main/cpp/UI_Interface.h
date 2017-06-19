@@ -16,7 +16,20 @@
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
+void onPoseAvailable(void*, const TangoPoseData* pose);
+
+void OnPointCloudAvailable(void*, const TangoPointCloud* point_cloud);
+
+void OnFrameAvailable(void*, TangoCameraId id, const TangoImageBuffer* buffer);
+
+// used to get last Pose data
 double* GetPosition();
+
+// used to get lase PointCloud count
+int GetPointCloud();
+
+// used to get last Frame Image data
+long* GetFrameImage();
 
 namespace UI {
 
@@ -55,6 +68,8 @@ namespace UI {
 
   private:
     TangoConfig tango_config_;
+
+    TangoErrorType err;
   };
 }  // namespace UI
 
