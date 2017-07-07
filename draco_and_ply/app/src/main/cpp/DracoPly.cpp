@@ -11,8 +11,6 @@ void OnPointCloudAvailable(void*, const TangoPointCloud* point_cloud)
   lastPointCloud = point_cloud->num_points;
 }
 
-int GetPointCloud() { return lastPointCloud; }
-
 namespace draco {
 
   void DracoPly::OnCreate(JNIEnv* env, jobject caller_activity)
@@ -94,5 +92,10 @@ namespace draco {
     tango_config_ = nullptr;
     TangoService_disconnect();
   } //OnPause
+
+  const char* DracoPly::GetPointCloud() {
+    const char* a = (std::string("test")).c_str();
+    return a;
+  }
 
 }  // namespace draco

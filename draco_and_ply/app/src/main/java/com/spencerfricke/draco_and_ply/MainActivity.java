@@ -31,6 +31,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         TangoJniNative.onCreate(this);
+
+        Button GetPointCloud_btn = (Button)findViewById(R.id.Point_Cloud);
+        GetPointCloud_btn.setOnClickListener(getPointCloudListener);
     }
 
     @Override
@@ -47,5 +50,18 @@ public class MainActivity extends AppCompatActivity {
         TangoJniNative.onPause();
         unbindService(mTangoServiceConnection);
     }
+
+    private View.OnClickListener getPointCloudListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+
+            String pointCloudData = TangoJniNative.getPointCloud();
+
+            TextView displayText = (TextView)findViewById(R.id.display_text);
+            String frameText = String.format("Saved to: %s", pointCloudData);
+            displayText.setText(frameText);
+        }
+    };
+
 
 }

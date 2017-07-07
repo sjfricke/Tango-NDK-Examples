@@ -1,5 +1,4 @@
 #include <jni.h>
-
 #include "DracoPly.h"
 
 static draco::DracoPly app;
@@ -31,6 +30,12 @@ JNIEXPORT void JNICALL
 Java_com_spencerfricke_draco_1and_1ply_TangoJniNative_onPause(
     JNIEnv*, jobject) {
   app.OnPause();
+}
+
+JNIEXPORT jstring JNICALL
+Java_com_spencerfricke_draco_1and_1ply_TangoJniNative_getPointCloud(
+    JNIEnv* env, jobject) {
+  return env->NewStringUTF(app.GetPointCloud());
 }
 
 #ifdef __cplusplus

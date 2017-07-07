@@ -18,9 +18,6 @@
 
 void OnPointCloudAvailable(void*, const TangoPointCloud* point_cloud);
 
-// used to get lase PointCloud count
-int GetPointCloud();
-
 
 namespace draco {
 
@@ -56,6 +53,9 @@ namespace draco {
 
     // Disconnect and stop Tango service.
     void OnPause();
+
+    // used to get PointCloud file
+    const char* GetPointCloud();
 
   private:
     TangoConfig tango_config_;
