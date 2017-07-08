@@ -25,6 +25,7 @@ JNIEXPORT void JNICALL
 Java_com_spencerfricke_opencl_1pointcloud_TangoJniNative_onTangoServiceConnected(
     JNIEnv* env, jobject, jobject iBinder) {
   app.OnTangoServiceConnected(env, iBinder);
+  runOpenCL();
 }
 
 JNIEXPORT void JNICALL

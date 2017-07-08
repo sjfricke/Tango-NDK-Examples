@@ -5,9 +5,12 @@ APP_ROOT:= $(call my-dir)/../../../..
 include $(CLEAR_VARS)
 LOCAL_MODULE    := libopencl_pointcloud
 LOCAL_SHARED_LIBRARIES := tango_client_api tango_support_api
-LOCAL_CFLAGS    := -Werror -std=c++11
+LOCAL_CFLAGS    := -Werror -std=c++11  -I$(LOCAL_PATH)/include/
+LOCAL_CFLAGS += -DANDROID_CL
 LOCAL_SRC_FILES := native-lib.cpp \
                    OpenCL_PointCloud.cpp
+LOCAL_CFLAGS  += -I$(LOCAL_PATH)/../CL
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/../
 LOCAL_LDLIBS    := -llog -lGLESv3 -L$(SYSROOT)/usr/lib -lOpenCL
 include $(BUILD_SHARED_LIBRARY)
 

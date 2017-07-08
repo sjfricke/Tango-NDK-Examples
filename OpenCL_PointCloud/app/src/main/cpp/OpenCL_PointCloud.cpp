@@ -9,6 +9,7 @@ void onPoseAvailable(void*, const TangoPoseData* pose) {
 }
 
 
+
 namespace PC {
 
   void OpenCL_PointCloud::OnCreate(JNIEnv* env, jobject caller_activity) {
@@ -63,94 +64,139 @@ namespace PC {
     TangoService_disconnect();
   }
 
-  void OpenCL_PointCloud::runOpenCL() {
-    const size_t N = 1 << 20;
-    try {
-      // Get list of OpenCL platforms.
-      std::vector<cl::Platform> platform;
-      cl::Platform::get(&platform);
 
-      if (platform.empty()) {
-        LOGE("OpenCL platforms not found.");
-        return;
-      }
-
-      // Get first available GPU device which supports double precision.
-      cl::Context context;
-      std::vector<cl::Device> device;
-      for(auto p = platform.begin(); device.empty() && p != platform.end(); p++) {
-        std::vector<cl::Device> pldev;
-
-        try {
-          p->getDevices(CL_DEVICE_TYPE_GPU, &pldev);
-
-          for(auto d = pldev.begin(); device.empty() && d != pldev.end(); d++) {
-            if (!d->getInfo<CL_DEVICE_AVAILABLE>()) continue;
-
-            std::string ext = d->getInfo<CL_DEVICE_EXTENSIONS>();
-
-            device.push_back(*d);
-            context = cl::Context(device);
-          }
-        } catch(...) {
-          device.clear();
-        }
-      }
-
-      if (device.empty()) {
-        LOGE("OpenCL GPUs with double precision not found.");
-      }
-
-      LOGI("OpenCL Device: %s", device[0].getInfo<CL_DEVICE_NAME>());
-
-      // Create command queue.
-      cl::CommandQueue queue(context, device[0]);
-
-      // Compile OpenCL program for found device.
-      cl::Program program(context, cl::Program::Sources(
-          1, std::make_pair(source, strlen(source))
-      ));
-
-      try {
-        program.build(device);
-      } catch (const cl::Error&) {
-        LOGE("OpenCL compilation error\n %s",program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device[0]));
-      }
-
-      cl::Kernel add(program, "add");
-
-      // Prepare input data.
-      std::vector<double> a(N, 1);
-      std::vector<double> b(N, 2);
-      std::vector<double> c(N);
-
-      // Allocate device buffers and transfer input data to device.
-      cl::Buffer A(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                   a.size() * sizeof(double), a.data());
-
-      cl::Buffer B(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                   b.size() * sizeof(double), b.data());
-
-      cl::Buffer C(context, CL_MEM_READ_WRITE,
-                   c.size() * sizeof(double));
-
-      // Set kernel parameters.
-      add.setArg(0, static_cast<cl_ulong>(N));
-      add.setArg(1, A);
-      add.setArg(2, B);
-      add.setArg(3, C);
-
-      // Launch kernel on the compute device.
-      queue.enqueueNDRangeKernel(add, cl::NullRange, N, cl::NullRange);
-
-      // Get result back to host.
-      queue.enqueueReadBuffer(C, CL_TRUE, 0, c.size() * sizeof(double), c.data());
-
-      // Should get '3' here.
-      LOGI("OpenCL Should be 3: %f", c[42]);
-    } catch (const cl::Error &err) {
-      LOGE("OpenCL error: %s\n%s", err.what() , err.err());
-    }
-  }
 
 }  // namespace PC
+
+void runOpenCL() {
+    // Length of vectors
+    unsigned int n = 100000;
+
+    static constexpr char source[] =
+            "#pragma OPENCL EXTENSION cl_khr_fp64 : enable\n"
+                    "__kernel void vecAdd(  __global double *a,\n"
+                    "                       __global double *b,\n"
+                    "                       __global double *c,\n"
+                    "                       const unsigned int n)\n"
+                    "{\n"
+                    "    int id = get_global_id(0);\n"
+                    "    if (id < n) {\n"
+                    "        c[id] = a[id] + b[id];\n"
+                    "    }\n"
+                    "}\n";
+    // Host input vectors
+    double *h_a;
+    double *h_b;
+    // Host output vector
+    double *h_c;
+
+    // Device input buffers
+    cl_mem d_a;
+    cl_mem d_b;
+    // Device output buffer
+    cl_mem d_c;
+
+    cl_platform_id cpPlatform;        // OpenCL platform
+    cl_device_id device_id;           // device ID
+    cl_context context;               // context
+    cl_command_queue queue;           // command queue
+    cl_program program;               // program
+    cl_kernel kernel;                 // kernel
+
+    // Size, in bytes, of each vector
+    size_t bytes = n*sizeof(double);
+
+    // Allocate memory for each vector on host
+    h_a = (double*)malloc(bytes);
+    h_b = (double*)malloc(bytes);
+    h_c = (double*)malloc(bytes);
+
+    // Initialize vectors on host
+    int i;
+    for( i = 0; i < n; i++ )
+    {
+        h_a[i] = 0 + i;
+        h_b[i] = 0 - i;
+    }
+
+    size_t globalSize, localSize;
+    cl_int err;
+
+    // Number of work items in each local work group
+    localSize = 64;
+
+    // Number of total work items - localSize must be devisor
+    globalSize = 100032; // hardcoded to prevent needing math.h
+
+    // Bind to platform
+    err = clGetPlatformIDs(1, &cpPlatform, NULL);
+
+    // Get ID for the device
+    err = clGetDeviceIDs(cpPlatform, CL_DEVICE_TYPE_GPU, 1, &device_id, NULL);
+
+    // Create a context
+    context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
+
+    // Create a command queue
+    queue = clCreateCommandQueue(context, device_id, 0, &err);
+
+    // Create the compute program from the source buffer
+    program = clCreateProgramWithSource(context, 1,
+                                        (const char **) &source, NULL, &err);
+
+    // Build the program executable
+    clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+
+    // Create the compute kernel in the program we wish to run
+    kernel = clCreateKernel(program, "vecAdd", &err);
+
+    // Create the input and output arrays in device memory for our calculation
+    d_a = clCreateBuffer(context, CL_MEM_READ_ONLY, bytes, NULL, NULL);
+    d_b = clCreateBuffer(context, CL_MEM_READ_ONLY, bytes, NULL, NULL);
+    d_c = clCreateBuffer(context, CL_MEM_WRITE_ONLY, bytes, NULL, NULL);
+
+    // Write our data set into the input array in device memory
+    err = clEnqueueWriteBuffer(queue, d_a, CL_TRUE, 0,
+                               bytes, h_a, 0, NULL, NULL);
+    err |= clEnqueueWriteBuffer(queue, d_b, CL_TRUE, 0,
+                                bytes, h_b, 0, NULL, NULL);
+
+    // Set the arguments to our compute kernel
+    err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_a);
+    err |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &d_b);
+    err |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &d_c);
+    err |= clSetKernelArg(kernel, 3, sizeof(unsigned int), &n);
+
+    // Execute the kernel over the entire range of the data set
+    err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &globalSize, &localSize,
+                                 0, NULL, NULL);
+
+    // Wait for the command queue to get serviced before reading back results
+    clFinish(queue);
+
+    // Read the results from the device
+    clEnqueueReadBuffer(queue, d_c, CL_TRUE, 0,
+                        bytes, h_c, 0, NULL, NULL );
+
+    //Sum up vector c and print result divided by n, this should equal 0 within error
+    double sum = 0;
+    for(i=0; i<n; i++)
+        sum += h_c[i];
+    LOGI("final result: %f\n", sum/(double)n);
+
+    // release OpenCL resources
+    clReleaseMemObject(d_a);
+    clReleaseMemObject(d_b);
+    clReleaseMemObject(d_c);
+    clReleaseProgram(program);
+    clReleaseKernel(kernel);
+    clReleaseCommandQueue(queue);
+    clReleaseContext(context);
+
+    //release host memory
+    free(h_a);
+    free(h_b);
+    free(h_c);
+
+    return;
+}
