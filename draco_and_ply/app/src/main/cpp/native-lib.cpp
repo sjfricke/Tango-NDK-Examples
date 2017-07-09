@@ -33,9 +33,12 @@ Java_com_spencerfricke_draco_1and_1ply_TangoJniNative_onPause(
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_spencerfricke_draco_1and_1ply_TangoJniNative_getPointCloud(
-    JNIEnv* env, jobject) {
-  return env->NewStringUTF(app.GetPointCloud());
+Java_com_spencerfricke_draco_1and_1ply_TangoJniNative_getPointCloudSingleFrame(
+    JNIEnv* env, jobject, jstring directory_path) {
+
+  const char* internalStoragePath = env->GetStringUTFChars(directory_path, 0);
+
+  return env->NewStringUTF(app.SavePointCloudToPly(1, internalStoragePath));
 }
 
 #ifdef __cplusplus

@@ -2,6 +2,7 @@ package com.spencerfricke.draco_and_ply;
 
 import android.content.ComponentName;
 import android.content.ServiceConnection;
+import android.os.Environment;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -55,7 +56,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onClick(View view) {
 
-            String pointCloudData = TangoJniNative.getPointCloud();
+            //String pointCloudData = TangoJniNative.getPointCloudSingleFrame(getApplicationContext().getFilesDir().getAbsolutePath());
+            String pointCloudData = TangoJniNative.getPointCloudSingleFrame(getApplicationContext().getExternalFilesDir(null).getAbsolutePath());
 
             TextView displayText = (TextView)findViewById(R.id.display_text);
             String frameText = String.format("Saved to: %s", pointCloudData);

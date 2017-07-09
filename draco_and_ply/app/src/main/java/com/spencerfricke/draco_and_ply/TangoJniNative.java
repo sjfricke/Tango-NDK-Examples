@@ -43,6 +43,6 @@ public class TangoJniNative {
      */
     public static native void onPause();
 
-    public static native String getPointCloud();
+    public static native String getPointCloudSingleFrame(String path);
 
 }
