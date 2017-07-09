@@ -133,7 +133,7 @@ void DepthViberation::OnPointCloudAvailable(const TangoPointCloud* point_cloud)
 
   // Need to set a delay in how often we send a callback to JNI since
   // it will start the viberation too often
-  if (callback_delay_count > 7) {
+  if (callback_delay_count > 5) {
     callback_delay_count = 0;
 
     if (calling_activity_obj_ == nullptr || on_demand_render_ == nullptr) {
@@ -141,7 +141,7 @@ void DepthViberation::OnPointCloudAvailable(const TangoPointCloud* point_cloud)
       return;
     }
 
-    jint viberation_rate = (average_depth * 120) - 10;
+    jint viberation_rate = (average_depth * 400) - 50;
     if (viberation_rate < 0) { viberation_rate = 0; };
 
     // Here, we notify the Java activity that we'd like it to trigger a render.

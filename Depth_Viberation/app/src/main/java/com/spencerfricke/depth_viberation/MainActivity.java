@@ -66,6 +66,10 @@ public class MainActivity extends Activity {
                 dot, interval, dot, interval,
                 dot, interval, dot, interval,
                 dot, interval, dot, interval,
+                dot, interval, dot, interval,
+                dot, interval, dot, interval,
+                dot, interval, dot, interval,
+                dot, interval, dot, interval,
                 dot, interval, dot, interval
         };
         vibrator.vibrate(pattern, -1);
