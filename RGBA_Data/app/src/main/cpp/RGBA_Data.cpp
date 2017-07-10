@@ -126,25 +126,14 @@ namespace rgba {
 
     static char file_path[256];
     char fileName[16];
-    sprintf(fileName, "/frame%d.png", image->frame_number);
+    sprintf(fileName, "/frame%ld.png", (long)image->frame_number);
 
     strcpy(file_path, directory_path);
     strcat(file_path, fileName);
 
     LOGI("file_path = %s", file_path);
 
-   FILE* file = fopen(file_path, "wb");
-    if (NULL == file) {
-      LOGE("fopen failed, errno = %d", errno);
-    }
-
-    //write to rgb file
-    if(0 > fwrite(rgba_buffer, 1, image->width * image->height * 4, file))
-    {
-      LOGE("FAILED to fwrite");
-    }
-
-    fclose(file);
+    unsigned error = lodepng_encode32_file(file_path, rgba_buffer, image->width, image->height);
 
     return file_path;
   }
@@ -153,6 +142,15 @@ namespace rgba {
     // Get the latest color image
     TangoImageBuffer* image = nullptr;
     TangoSupport_getLatestImageBuffer(image_buffer_manager_, &image);
+
+    nv21_to_rgba(image->data, rgba_buffer, image->width, image->height);
+
+    unsigned char* png;
+    size_t pngsize;
+
+    unsigned error = lodepng_encode32(&png, &pngsize, rgba_buffer, image->width, image->height);
+
+    return 0;
   }
 
   static int yuv_tbl_ready_flag=0;
@@ -245,24 +243,24 @@ namespace rgba {
         v = (vu>>(k+8))&0xff;
 
         int y1192_11=y1192_tbl[y11];
-        int r11 = (y1192_11 + v1634_tbl[v])>>10;
+        int b11 = (y1192_11 + v1634_tbl[v])>>10;
         int g11 = (y1192_11 - v833_tbl[v] - u400_tbl[u])>>10;
-        int b11 = (y1192_11 + u2066_tbl[u])>>10;
+        int r11 = (y1192_11 + u2066_tbl[u])>>10;
 
         int y1192_12=y1192_tbl[y12];
-        int r12 = (y1192_12 + v1634_tbl[v])>>10;
+        int b12 = (y1192_12 + v1634_tbl[v])>>10;
         int g12 = (y1192_12 - v833_tbl[v] - u400_tbl[u])>>10;
-        int b12 = (y1192_12 + u2066_tbl[u])>>10;
+        int r12 = (y1192_12 + u2066_tbl[u])>>10;
 
         int y1192_21=y1192_tbl[y21];
-        int r21 = (y1192_21 + v1634_tbl[v])>>10;
+        int b21 = (y1192_21 + v1634_tbl[v])>>10;
         int g21 = (y1192_21 - v833_tbl[v] - u400_tbl[u])>>10;
-        int b21 = (y1192_21 + u2066_tbl[u])>>10;
+        int r21 = (y1192_21 + u2066_tbl[u])>>10;
 
         int y1192_22=y1192_tbl[y22];
-        int r22 = (y1192_22 + v1634_tbl[v])>>10;
+        int b22 = (y1192_22 + v1634_tbl[v])>>10;
         int g22 = (y1192_22 - v833_tbl[v] - u400_tbl[u])>>10;
-        int b22 = (y1192_22 + u2066_tbl[u])>>10;
+        int r22 = (y1192_22 + u2066_tbl[u])>>10;
 
         *rgb1++ = UCHAR_RANGE(r11);
         *rgb1++ = UCHAR_RANGE(g11);

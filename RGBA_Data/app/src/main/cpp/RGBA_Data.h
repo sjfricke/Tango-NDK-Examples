@@ -12,6 +12,8 @@
 #include <jni.h>
 #include <android/log.h>
 
+#include "lodepng.h"
+
 // used to get logcat outputs which can be regex filtered by the LOG_TAG we give
 // So in Logcat you can filter this example by putting Tutorial_TAG
 #define LOG_TAG "RGBAData"
