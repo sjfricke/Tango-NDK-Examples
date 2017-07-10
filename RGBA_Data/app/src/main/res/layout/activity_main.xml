@@ -13,29 +13,39 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
-        android:text="Click Button To Get Data"
+        android:text="Currently scanning in image frames"
         android:textAlignment="center"
         android:textSize="18sp"/>
 
     <Button
-        android:id="@+id/Position_Button"
+        android:id="@+id/Save_Button"
         style="@android:style/Widget.Button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="10dp"
-        android:onClick="getPosition"
-        android:text="Get Position"/>
+        android:onClick="savePNG"
+        android:text="Save PNG to File"/>
 
     <Button
-        android:id="@+id/Point_Cloud"
+        android:id="@+id/Send_Button"
         style="@android:style/Widget.Button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/Position_Button"
+        android:layout_above="@+id/Save_Button"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="10dp"
-        android:onClick="getPointCloud"
-        android:text="Get Point Cloud"/>
+        android:onClick="sendPNG"
+        android:text="Send PNG to Server"/>
+
+    <EditText
+        android:id="@+id/serverIP"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_above="@+id/Send_Button"
+        android:layout_centerHorizontal="true"
+        android:ems="50"
+        android:inputType="textUri"
+        android:text="Server IP"/>
 
 </RelativeLayout>

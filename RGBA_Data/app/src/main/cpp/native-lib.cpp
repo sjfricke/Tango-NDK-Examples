@@ -33,15 +33,21 @@ Java_com_spencerfricke_rgba_1data_TangoJniNative_onPause(
   app.OnPause();
 }
 
-JNIEXPORT void JNICALL
-Java_com_spencerfricke_rgba_1data_TangoJniNative_sendPNG(
-    JNIEnv* env, jobject) {
+JNIEXPORT jstring JNICALL
+Java_com_spencerfricke_rgba_1data_TangoJniNative_savePNG(
+    JNIEnv* env, jobject, jstring directory_path) {
+
+  const char* internalStoragePath = env->GetStringUTFChars(directory_path, 0);
+
+  return env->NewStringUTF(app.SavePNG(internalStoragePath));
 }
 
-JNIEXPORT void JNICALL
-Java_com_spencerfricke_rgba_1data_TangoJniNative_savePNG(
-    JNIEnv* env, jobject) {
-
+JNIEXPORT jint JNICALL
+Java_com_spencerfricke_rgba_1data_TangoJniNative_sendPNG(
+    JNIEnv* env, jobject, jstring ip) {
+  const char* serverIP = env->GetStringUTFChars(ip, 0);
+  jint status = app.SendPNG(serverIP);
+  return status;
 }
 
 

@@ -43,5 +43,9 @@ public class TangoJniNative {
      */
     public static native void onPause();
 
+    public static native String savePNG(String file_path);
+
+    public static native int sendPNG(String ip);
+
 
 }

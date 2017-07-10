@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 /**
@@ -17,6 +18,9 @@ import android.widget.TextView;
  * native code code which calls into Tango C API.
  */
 public class MainActivity extends Activity  {
+
+    EditText serverIP;
+    TextView displayText;
 
     private static final int MY_CAMERA_REQUEST_CODE = 100;
 
@@ -39,13 +43,21 @@ public class MainActivity extends Activity  {
 
         setContentView(R.layout.activity_main);
 
-        if (checkSelfPermission(Manifest.permission.CAMERA)
-                != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.CAMERA},
-                    MY_CAMERA_REQUEST_CODE);
+        // Needed or else the camera might not automatically grant permissions
+        if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, MY_CAMERA_REQUEST_CODE);
         }
 
         TangoJniNative.onCreate(this);
+
+        Button GetPosition_btn = (Button)findViewById(R.id.Save_Button);
+        GetPosition_btn.setOnClickListener(SaveButtonListener);
+
+        Button GetPointCloud_btn = (Button)findViewById(R.id.Send_Button);
+        GetPointCloud_btn.setOnClickListener(SendButtonListener);
+
+        displayText = (TextView)findViewById(R.id.display_text);
+        serverIP = (EditText)findViewById(R.id.serverIP);
     }
 
     @Override
@@ -63,61 +75,32 @@ public class MainActivity extends Activity  {
         unbindService(mTangoServiceCoonnection);
     }
 
-//    // Tango Service connection.
-//    ServiceConnection mTangoServiceConnection = new ServiceConnection() {
-//        public void onServiceConnected(ComponentName name, IBinder service) {
-//            // Synchronization around MainActivity object is to avoid
-//            // Tango disconnect in the middle of the connecting operation.
-//            TangoJniNative.onTangoServiceConnected(service);
-//        }
-//
-//        public void onServiceDisconnected(ComponentName name) {
-//            // Handle this if you need to gracefully shutdown/retry
-//            // in the event that Tango itself crashes/gets upgraded while running.
-//        }
-//    };
-//
-//
-//    @Override
-//    protected void onCreate(Bundle savedInstanceState) {
-//        super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_main);
-//        TangoJniNative.onCreate(this);
-//
-//        Button GetPosition_btn = (Button)findViewById(R.id.Position_Button);
-//        GetPosition_btn.setOnClickListener(getPostionListener);
-//
-//        Button GetPointCloud_btn = (Button)findViewById(R.id.Point_Cloud);
-//        GetPointCloud_btn.setOnClickListener(getPointCloudListener);
-//    }
-//
-//    @Override
-//    protected void onResume() {
-//        super.onResume();
-//        TangoInitializationHelper.bindTangoService(this, mTangoServiceConnection);
-//    }
-//
-//    @Override
-//    protected void onPause() {
-//        super.onPause();
-//        // Disconnect from Tango Service, release all the resources that the app is
-//        // holding from Tango Service.
-//        TangoJniNative.onPause();
-//        unbindService(mTangoServiceConnection);
-//    }
-//
-//    private View.OnClickListener getPostionListener = new View.OnClickListener() {
-//        @Override
-//        public void onClick(View view) {
-//
-//        }
-//    };
-//
-//    private View.OnClickListener getPointCloudListener = new View.OnClickListener() {
-//        @Override
-//        public void onClick(View view) {
-//
-//        }
-//    };
+    private View.OnClickListener SaveButtonListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            // Gets file path where app can save external files too
+            String SavePath = TangoJniNative.savePNG(getApplicationContext().getExternalFilesDir(null).getAbsolutePath());
+
+            String frameText = String.format("Saved to: %s", SavePath);
+            displayText.setText(frameText);
+        }
+    };
+
+    private View.OnClickListener SendButtonListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            String ip = serverIP.getText().toString();
+
+            int status = TangoJniNative.sendPNG(ip);
+
+            if (status >= 0) {
+                String frameText = String.format("PNG Sent to server!");
+                displayText.setText(frameText);
+            } else {
+                String frameText = String.format("Failed sending to server with error: %d", status);
+                displayText.setText(frameText);
+            }
+        }
+    };
 
 }
