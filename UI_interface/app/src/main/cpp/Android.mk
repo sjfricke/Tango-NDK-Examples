@@ -7,7 +7,7 @@ LOCAL_SHARED_LIBRARIES := tango_client_api tango_support_api
 LOCAL_CFLAGS    := -Werror -std=c++11
 LOCAL_SRC_FILES := native-lib.cpp \
                    UI_Interface.cpp
-LOCAL_LDLIBS    := -llog -lGLESv3 -L$(SYSROOT)/usr/lib
+LOCAL_LDLIBS    := -llog -lGLESv2 -L$(SYSROOT)/usr/lib
 include $(BUILD_SHARED_LIBRARY)
 
 $(call import-add-path, $(PROJECT_ROOT))

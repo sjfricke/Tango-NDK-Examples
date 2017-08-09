@@ -20,16 +20,11 @@ void onPoseAvailable(void*, const TangoPoseData* pose);
 
 void OnPointCloudAvailable(void*, const TangoPointCloud* point_cloud);
 
-void OnFrameAvailable(void*, TangoCameraId id, const TangoImageBuffer* buffer);
-
 // used to get last Pose data
 double* GetPosition();
 
 // used to get lase PointCloud count
 int GetPointCloud();
-
-// used to get last Frame Image data
-long* GetFrameImage();
 
 namespace UI {
 

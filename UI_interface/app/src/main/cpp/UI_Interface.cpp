@@ -3,8 +3,9 @@
 // We can set a minimum version of tango for our application
 constexpr int kTangoCoreMinimumVersion = 9377;
 
+// Note: It would be better to use a PoseManager and PointCloudManger
+// This is just a dirty quick way to not distract from how the UI works
 double* lastPoseData;
-long* lastFrameImage;
 int lastPointCloud;
 
 void onPoseAvailable(void*, const TangoPoseData* pose)
@@ -15,26 +16,12 @@ void onPoseAvailable(void*, const TangoPoseData* pose)
 
 void OnPointCloudAvailable(void*, const TangoPointCloud* point_cloud)
 {
-  LOGI("Point count: %d",point_cloud->num_points);
   lastPointCloud = point_cloud->num_points;
-}
-
-void OnFrameAvailable(void*, TangoCameraId, const TangoImageBuffer* buffer)
-{
-  LOGI("Height: %d", buffer->height);
-  *(lastFrameImage)     = (long)(buffer->height);
-  *(lastFrameImage + 1) = (long)(buffer->width);
-  *(lastFrameImage + 2) = (long)(buffer->stride);
-  *(lastFrameImage + 3) = (long)(buffer->exposure_duration_ns);
-  *(lastFrameImage + 4) = (long)(buffer->frame_number);
 }
 
 double* GetPosition() { return lastPoseData; }
 
 int GetPointCloud() { return lastPointCloud; }
-
-long* GetFrameImage() { return lastFrameImage; }
-
 
 namespace UI {
 
@@ -48,12 +35,11 @@ namespace UI {
     LOGI("Current Tango Core Version: %d", version);
 
     if (TANGO_SUCCESS != err || version < kTangoCoreMinimumVersion) {
-      LOGE("UI_Interface::CheckVersion, Tango Core version is out of date.");
+      LOGE("CheckVersion, Tango Core version is out of date.");
       std::exit(EXIT_SUCCESS);
     }
 
-    lastPoseData = (double*)malloc(7 * sizeof(double));
-    lastFrameImage = (long*)malloc(5 * sizeof(long));
+    lastPoseData = (double*)malloc(7 * sizeof(double));;
 
   } //OnCreate
 
@@ -61,7 +47,7 @@ namespace UI {
   {
     // First thing is to set the iBinder with the Tango Service
     if (TangoService_setBinder(env, iBinder) != TANGO_SUCCESS) {
-      LOGE("OnTangoServiceConnected, TangoService_setBinder error");
+      LOGE("TangoService_setBinder error");
       std::exit(EXIT_SUCCESS);
     }
 
@@ -73,28 +59,21 @@ namespace UI {
     // Perception.
     tango_config_ = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
     if (nullptr == tango_config_) {
-      LOGE("OnTangoServiceConnected, TangoService_getConfig error.");
-      std::exit(EXIT_SUCCESS);
-    }
-
-    // Enable color camera from config.
-    err = TangoConfig_setBool(tango_config_, "config_enable_color_camera", true);
-    if (TANGO_SUCCESS != err) {
-      LOGE( "OnTangoServiceConnected config_enable_color_camera() failed with error code: %d", err);
+      LOGE("TangoService_getConfig error.");
       std::exit(EXIT_SUCCESS);
     }
 
     // Enable Depth Perception.
     err = TangoConfig_setBool(tango_config_, "config_enable_depth", true);
     if (TANGO_SUCCESS != err) {
-      LOGE("UI_Interface::ConnectTango ,config_enable_depth() failed with error code: %d.", err);
+      LOGE("Failed to set 'enable_depth' configuration - failed with error code: %d.", err);
       std::exit(EXIT_SUCCESS);
     }
 
     // Need to specify the depth_mode as XYZC.
     err = TangoConfig_setInt32(tango_config_, "config_depth_mode",  TANGO_POINTCLOUD_XYZC);
     if (TANGO_SUCCESS != err) {
-      LOGE( "Failed to set 'depth_mode' configuration flag with error code: %d", err);
+      LOGE( "Failed to set 'depth_mode' configuration - failed with error code: %d", err);
       std::exit(EXIT_SUCCESS);
     }
 
@@ -109,19 +88,13 @@ namespace UI {
     pair.target = TANGO_COORDINATE_FRAME_DEVICE;
     err = TangoService_connectOnPoseAvailable(1, &pair, onPoseAvailable);
     if (TANGO_SUCCESS != err) {
-      LOGE("OnTangoServiceConnected, connectOnPoseAvailable error code: %d", err);
+      LOGE("connectOnPoseAvailable error code: %d", err);
       std::exit(EXIT_SUCCESS);
     }
 
     err = TangoService_connectOnPointCloudAvailable(OnPointCloudAvailable);
     if (TANGO_SUCCESS != err) {
-      LOGE("OnTangoServiceConnected, connectOnPointCloudAvailable error code: %d", err);
-      std::exit(EXIT_SUCCESS);
-    }
-
-    err = TangoService_connectOnFrameAvailable(TANGO_CAMERA_COLOR, this, OnFrameAvailable);
-    if (TANGO_SUCCESS != err) {
-      LOGE( "OnTangoServiceConnected, Error connecting color frame %d", err);
+      LOGE("connectOnPointCloudAvailable error code: %d", err);
       std::exit(EXIT_SUCCESS);
     }
 
@@ -130,7 +103,7 @@ namespace UI {
     ////////////////////////////////////////////
 
     if (TANGO_SUCCESS != TangoService_connect(this, tango_config_)) {
-      LOGE("UI_Interface::ConnectTango, TangoService_connect error.");
+      LOGE("TangoService_connect error.");
       std::exit(EXIT_SUCCESS);
     }
 
@@ -144,7 +117,6 @@ namespace UI {
     tango_config_ = nullptr;
     TangoService_disconnect();
     free(lastPoseData);
-    free(lastFrameImage);
   } //OnPause
 
 }  // namespace UI

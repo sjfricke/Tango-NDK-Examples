@@ -61,30 +61,6 @@ Java_com_spencerfricke_ui_1interface_TangoJniNative_getPosition(
   return result;
 }
 
-JNIEXPORT jlongArray JNICALL
-Java_com_spencerfricke_ui_1interface_TangoJniNative_getFrameImage(
-    JNIEnv* env, jobject) {
-
-  jlongArray result;
-  result = env->NewLongArray(5);
-  if (result == NULL) {
-    return NULL; /* out of memory error thrown */
-  }
-
-  long* frameData = GetFrameImage();
-
-  jlong fill[5] = {
-      frameData[0],
-      frameData[1],
-      frameData[2],
-      frameData[3],
-      frameData[4]
-  };
-
-  env->SetLongArrayRegion(result, 0, 5, fill);
-  return result;
-}
-
 JNIEXPORT jint JNICALL
 Java_com_spencerfricke_ui_1interface_TangoJniNative_getPointCloud(
     JNIEnv* env, jobject) {

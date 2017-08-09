@@ -37,16 +37,4 @@
         android:onClick="getPointCloud"
         android:text="Get Point Cloud"/>
 
-    <Button
-        android:id="@+id/Image_Frame"
-        style="@android:style/Widget.Button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/Point_Cloud"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="10dp"
-        android:onClick="getFrameImage"
-        android:text="Get Image Frame"/>
-
-
 </RelativeLayout>
