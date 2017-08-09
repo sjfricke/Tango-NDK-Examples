@@ -6,7 +6,6 @@ import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.Bundle;
 import android.os.Vibrator;
-import android.util.Log;
 
 public class MainActivity extends Activity {
 

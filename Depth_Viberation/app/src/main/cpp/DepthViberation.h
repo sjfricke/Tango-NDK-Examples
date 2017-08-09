@@ -73,7 +73,7 @@ private:
   // Cached Java VM, caller activity object
   JavaVM* java_vm_;
   jobject calling_activity_obj_;
-  jmethodID on_demand_render_;
+  jmethodID on_demand_method_;
 
   int callback_delay_count = 0;
 

@@ -31,7 +31,7 @@ void DepthViberation::OnCreate(JNIEnv* env, jobject caller_activity)
   jclass handlerClass = env->FindClass("com/spencerfricke/depth_viberation/MainActivity");
 
   // Here you need to name the function and the JNI argument/parameter type
-  on_demand_render_ = env->GetMethodID(handlerClass, "pulse", "(I)V");
+  on_demand_method_ = env->GetMethodID(handlerClass, "pulse", "(I)V");
 
 } //OnCreate
 
@@ -39,7 +39,7 @@ void DepthViberation::OnTangoServiceConnected(JNIEnv* env, jobject iBinder)
 {
   // First thing is to set the iBinder with the Tango Service
   if (TangoService_setBinder(env, iBinder) != TANGO_SUCCESS) {
-    LOGE("OnTangoServiceConnected, TangoService_setBinder error");
+    LOGE("TangoService_setBinder error");
     std::exit(EXIT_SUCCESS);
   }
 
@@ -51,21 +51,21 @@ void DepthViberation::OnTangoServiceConnected(JNIEnv* env, jobject iBinder)
   // Perception.
   tango_config_ = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
   if (nullptr == tango_config_) {
-    LOGE("OnTangoServiceConnected, TangoService_getConfig error.");
+    LOGE("TangoService_getConfig error.");
     std::exit(EXIT_SUCCESS);
   }
 
   // Enable Depth Perception.
   err = TangoConfig_setBool(tango_config_, "config_enable_depth", true);
   if (TANGO_SUCCESS != err) {
-    LOGE("OnTangoServiceConnected ,config_enable_depth() failed with error code: %d.", err);
+    LOGE("config_enable_depth() configuration - failed with error code: %d.", err);
     std::exit(EXIT_SUCCESS);
   }
 
   // Need to specify the depth_mode as XYZC.
   err = TangoConfig_setInt32(tango_config_, "config_depth_mode",  TANGO_POINTCLOUD_XYZC);
   if (TANGO_SUCCESS != err) {
-    LOGE( "OnTangoServiceConnected, 'depth_mode' configuration flag with error code: %d", err);
+    LOGE( "'depth_mode' configuration - failed with error code: %d", err);
     std::exit(EXIT_SUCCESS);
   }
 
@@ -75,7 +75,7 @@ void DepthViberation::OnTangoServiceConnected(JNIEnv* env, jobject iBinder)
 
   err = TangoService_connectOnPointCloudAvailable(OnPointCloudAvailableRouter);
   if (TANGO_SUCCESS != err) {
-    LOGE("OnTangoServiceConnected, connectOnPointCloudAvailable error code: %d", err);
+    LOGE("connectOnPointCloudAvailable error code: %d", err);
     std::exit(EXIT_SUCCESS);
   }
 
@@ -84,7 +84,7 @@ void DepthViberation::OnTangoServiceConnected(JNIEnv* env, jobject iBinder)
   ////////////////////////////////////////////
 
   if (TANGO_SUCCESS != TangoService_connect(this, tango_config_)) {
-    LOGE("UI_Interface::ConnectTango, TangoService_connect error.");
+    LOGE("TangoService_connect error.");
     std::exit(EXIT_SUCCESS);
   }
 
@@ -105,7 +105,7 @@ void DepthViberation::OnDestroy() {
   env->DeleteGlobalRef(calling_activity_obj_);
 
   calling_activity_obj_ = nullptr;
-  on_demand_render_ = nullptr;
+  on_demand_method_ = nullptr;
 }
 
 void DepthViberation::OnPointCloudAvailable(const TangoPointCloud* point_cloud)
@@ -136,18 +136,18 @@ void DepthViberation::OnPointCloudAvailable(const TangoPointCloud* point_cloud)
   if (callback_delay_count > 5) {
     callback_delay_count = 0;
 
-    if (calling_activity_obj_ == nullptr || on_demand_render_ == nullptr) {
-      LOGE("Can not reference Activity to request render");
+    if (calling_activity_obj_ == nullptr || on_demand_method_ == nullptr) {
+      LOGE("Can not reference Activity to request pulsing");
       return;
     }
 
-    jint viberation_rate = (average_depth * 400) - 50;
+    jint viberation_rate = static_cast<jint>((average_depth * 400) - 50);
     if (viberation_rate < 0) { viberation_rate = 0; };
 
-    // Here, we notify the Java activity that we'd like it to trigger a render.
+    // Here, we notify the Java activity that we'd like it to trigger a callback.
     JNIEnv *env;
     java_vm_->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6);
-    env->CallVoidMethod(calling_activity_obj_, on_demand_render_, viberation_rate);
+    env->CallVoidMethod(calling_activity_obj_, on_demand_method_, viberation_rate);
 
   } else {
     callback_delay_count++;

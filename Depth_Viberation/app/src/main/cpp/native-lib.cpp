@@ -9,7 +9,7 @@ extern "C" {
 #endif
 jint JNI_OnLoad(JavaVM* vm, void*) {
   // We need to store a reference to the Java VM so that we can call into the
-  // Java layer to trigger rendering.
+  // Java layer to trigger pulse function.
   app.SetJavaVM(vm);
   return JNI_VERSION_1_6;
 }
