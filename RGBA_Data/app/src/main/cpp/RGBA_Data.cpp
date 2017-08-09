@@ -22,7 +22,7 @@ namespace rgba {
     LOGI("Current Tango Core Version: %d", version);
 
     if (TANGO_SUCCESS != err || version < kTangoCoreMinimumVersion) {
-      LOGE("RGBAData::CheckVersion, Tango Core version is out of date.");
+      LOGE("Tango Core version is out of date.");
       std::exit(EXIT_SUCCESS);
     }
 
@@ -33,7 +33,7 @@ namespace rgba {
   {
     // First thing is to set the iBinder with the Tango Service
     if (TangoService_setBinder(env, iBinder) != TANGO_SUCCESS) {
-      LOGE("OnTangoServiceConnected, TangoService_setBinder error");
+      LOGE("TangoService_setBinder error");
       std::exit(EXIT_SUCCESS);
     }
 
@@ -43,20 +43,20 @@ namespace rgba {
 
     tango_config_ = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
     if (tango_config_ == nullptr) {
-      LOGE( "OnTangoServiceConnected: Failed to get default config form");
+      LOGE("Failed to get TANGO_CONFIG_DEFAULT");
       std::exit(EXIT_SUCCESS);
     }
 
     // Enable color camera from config.
     int err = TangoConfig_setBool(tango_config_, "config_enable_color_camera", true);
     if (err != TANGO_SUCCESS) {
-      LOGE( "config_enable_color_camera() failed with error code: %d", err);
+      LOGE("config_enable_color_camera() failed with error code: %d", err);
       std::exit(EXIT_SUCCESS);
     }
 
     err = TangoService_getCameraIntrinsics(TANGO_CAMERA_COLOR, &color_camera_intrinsics_);
     if (err != TANGO_SUCCESS) {
-      LOGE( "Failed to get the intrinsics for the color camera.");
+      LOGE("Failed to get the intrinsics for the color camera.");
       std::exit(EXIT_SUCCESS);
     }
 
@@ -66,7 +66,7 @@ namespace rgba {
 
      err = TangoService_connectOnFrameAvailable(TANGO_CAMERA_COLOR, this, OnFrameAvailableRouter);
     if (err != TANGO_SUCCESS) {
-      LOGE( "Error connecting color frame %d", err);
+      LOGE("Error connecting color frame %d", err);
       std::exit(EXIT_SUCCESS);
     }
 
@@ -91,7 +91,7 @@ namespace rgba {
     // pose can be queried.
     err = TangoService_connect(this, tango_config_);
     if (err != TANGO_SUCCESS) {
-      LOGE( "Failed to connect to the Tango service with error code: %d", err);
+      LOGE("Failed to connect to the Tango service with error code: %d", err);
       std::exit(EXIT_SUCCESS);
     }
 
@@ -114,7 +114,6 @@ namespace rgba {
 
   void RGBAData::OnFrameAvailable(const TangoImageBuffer* buffer) {
     TangoSupport_updateImageBuffer(image_buffer_manager_, buffer);
-    LOGI("GETTING FRAME: %d (Frame: %ld)", buffer->height, (long)buffer->frame_number);
   }
 
   const char* RGBAData::SavePNG(const char* directory_path) {
@@ -122,6 +121,7 @@ namespace rgba {
     TangoImageBuffer* image = nullptr;
     TangoSupport_getLatestImageBuffer(image_buffer_manager_, &image);
 
+    // need to convert to RGBA color space to use easier
     nv21_to_rgba(image->data, rgba_buffer, image->width, image->height);
 
     static char file_path[256];
@@ -131,24 +131,32 @@ namespace rgba {
     strcpy(file_path, directory_path);
     strcat(file_path, fileName);
 
-    LOGI("file_path = %s", file_path);
-
+    // This is a single line lodepng library function
+    // will take rgba buffer and turn to png file and save to path
     unsigned error = lodepng_encode32_file(file_path, rgba_buffer, image->width, image->height);
 
     return file_path;
   }
 
   int RGBAData::SendPNG(const char* serverIP) {
+
+    // TODO
     // Get the latest color image
     TangoImageBuffer* image = nullptr;
     TangoSupport_getLatestImageBuffer(image_buffer_manager_, &image);
 
+    // need to convert to RGBA color space to use easier
     nv21_to_rgba(image->data, rgba_buffer, image->width, image->height);
 
     unsigned char* png;
     size_t pngsize;
 
+    // This is a single line lodepng library function
+    // will take rgba buffer and turn to png file, doesn't write it out
     unsigned error = lodepng_encode32(&png, &pngsize, rgba_buffer, image->width, image->height);
+
+    // TODO
+    // Add support to send to server
 
     return 0;
   }

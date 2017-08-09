@@ -50,7 +50,6 @@ Java_com_spencerfricke_rgba_1data_TangoJniNative_sendPNG(
   return status;
 }
 
-
 #ifdef __cplusplus
 }
 #endif
