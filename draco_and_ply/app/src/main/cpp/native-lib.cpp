@@ -32,13 +32,22 @@ Java_com_spencerfricke_draco_1and_1ply_TangoJniNative_onPause(
   app.OnPause();
 }
 
+static bool set_file_name_already = false;
+
 JNIEXPORT jstring JNICALL
 Java_com_spencerfricke_draco_1and_1ply_TangoJniNative_getPointCloudSingleFrame(
     JNIEnv* env, jobject, jstring directory_path) {
 
   const char* internalStoragePath = env->GetStringUTFChars(directory_path, 0);
 
-  return env->NewStringUTF(app.SavePointCloudToPly(1, internalStoragePath));
+  if (set_file_name_already == false) {
+    app.SetSaveFileDirectory(internalStoragePath);
+    set_file_name_already = true;
+  }
+
+  app.SetFrameCount(10);
+
+  return env->NewStringUTF(internalStoragePath);
 }
 
 #ifdef __cplusplus

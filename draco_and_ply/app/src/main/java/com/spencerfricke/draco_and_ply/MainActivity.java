@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onClick(View view) {
 
-            //String pointCloudData = TangoJniNative.getPointCloudSingleFrame(getApplicationContext().getFilesDir().getAbsolutePath());
+            // gets savable path in app folder
             String pointCloudData = TangoJniNative.getPointCloudSingleFrame(getApplicationContext().getExternalFilesDir(null).getAbsolutePath());
 
             TextView displayText = (TextView)findViewById(R.id.display_text);
@@ -64,6 +64,4 @@ public class MainActivity extends AppCompatActivity {
             displayText.setText(frameText);
         }
     };
-
-
 }

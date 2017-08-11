@@ -1,4 +1,5 @@
 #include "DracoPly.h"
+#include <time.h>
 
 // We can set a minimum version of tango for our application
 constexpr int kTangoCoreMinimumVersion = 9377;
@@ -20,17 +21,18 @@ namespace draco {
     LOGI("Current Tango Core Version: %d", version);
 
     if (TANGO_SUCCESS != err || version < kTangoCoreMinimumVersion) {
-      LOGE("DracoPly::CheckVersion, Tango Core version is out of date.");
+      LOGE("Tango Core version is out of date.");
       std::exit(EXIT_SUCCESS);
     }
 
+    remaining_frames = 0;
   } //OnCreate
 
   void DracoPly::OnTangoServiceConnected(JNIEnv* env, jobject iBinder)
   {
     // First thing is to set the iBinder with the Tango Service
     if (TangoService_setBinder(env, iBinder) != TANGO_SUCCESS) {
-      LOGE("OnTangoServiceConnected, TangoService_setBinder error");
+      LOGE("TangoService_setBinder error");
       std::exit(EXIT_SUCCESS);
     }
 
@@ -42,21 +44,21 @@ namespace draco {
     // Perception.
     tango_config_ = TangoService_getConfig(TANGO_CONFIG_DEFAULT);
     if (nullptr == tango_config_) {
-      LOGE("OnTangoServiceConnected, TangoService_getConfig error.");
+      LOGE("TangoService_getConfig error.");
       std::exit(EXIT_SUCCESS);
     }
 
     // Enable Depth Perception.
     err = TangoConfig_setBool(tango_config_, "config_enable_depth", true);
     if (TANGO_SUCCESS != err) {
-      LOGE("OnTangoServiceConnected ,config_enable_depth() failed with error code: %d.", err);
+      LOGE("config_enable_depth() failed with error code: %d.", err);
       std::exit(EXIT_SUCCESS);
     }
 
     // Need to specify the depth_mode as XYZC.
     err = TangoConfig_setInt32(tango_config_, "config_depth_mode",  TANGO_POINTCLOUD_XYZC);
     if (TANGO_SUCCESS != err) {
-      LOGE( "OnTangoServiceConnected, 'depth_mode' configuration flag with error code: %d", err);
+      LOGE( "'depth_mode' configuration flag with error code: %d", err);
       std::exit(EXIT_SUCCESS);
     }
 
@@ -82,7 +84,7 @@ namespace draco {
 
     err = TangoService_connectOnPointCloudAvailable(OnPointCloudAvailableRouter);
     if (TANGO_SUCCESS != err) {
-      LOGE("OnTangoServiceConnected, connectOnPointCloudAvailable error code: %d", err);
+      LOGE("connectOnPointCloudAvailable error code: %d", err);
       std::exit(EXIT_SUCCESS);
     }
 
@@ -91,7 +93,7 @@ namespace draco {
     ////////////////////////////////////////////
 
     if (TANGO_SUCCESS != TangoService_connect(this, tango_config_)) {
-      LOGE("UI_Interface::ConnectTango, TangoService_connect error.");
+      LOGE("TangoService_connect error.");
       std::exit(EXIT_SUCCESS);
     }
 
@@ -114,62 +116,84 @@ namespace draco {
       std::exit(EXIT_SUCCESS);
     }
 
+    // if there is a frame count check for confidence points and add to list
+    if (remaining_frames > 0) {
+
+        for (uint32_t i = 0; i < point_cloud->num_points; i++) {
+          if (point_cloud->points[i][3] > 0.5f) {
+            point_cloud_vector.push_back({
+                    point_cloud->points[i][0],
+                    point_cloud->points[i][1],
+                    point_cloud->points[i][2]});
+          }
+        }
+
+      remaining_frames--;
+
+      if (remaining_frames == 0) { SavePointCloudToPly(); }
+    }
   }
 
-  const char* DracoPly::SavePointCloudToPly(int frames, const char* directory) {
+  void DracoPly::SetSaveFileDirectory(const char *directory) {
 
-    static char file_path[256];
-    strcpy(file_path, directory);
-    strcat(file_path,"/tango.ply");
-    LOGI("file_path = %s", file_path);
+    char file_name[] = "/tango.ply";
 
-    point_cloud_vector.resize(frames);
-    GetPointCloud(point_cloud_vector.at(0));
-
-    uint32_t totalSize = 0;
-    err = TangoSupport_getLatestPointCloud(point_cloud_manager_, &point_cloud_vector.at(0));
-    if (TANGO_SUCCESS != err) {
-      LOGE("TangoSupport_getLatestPointCloud - error code: %d", err);
+    // make sure its not longer then file name size limit
+    if (strlen(directory) > 256 - strlen(file_name)) {
+      LOGE("File path is long, %s, %s, %s", directory, save_file_path, file_name);
+      std::exit(EXIT_FAILURE);
     }
-    totalSize += point_cloud_vector.at(0)->num_points;
-//    for (auto point_cloud : point_cloud_vector) {
-//      totalSize += point_cloud->num_points;
+
+    strcpy(save_file_path, directory);
+    strcat(save_file_path, file_name);
+    LOGI("file_path = %s", save_file_path);
+
+  }
+
+  void DracoPly::SetFrameCount(uint32_t frames) {
+    if (remaining_frames == 0) {
+      remaining_frames = frames;
+    }
+  }
+
+  const char* DracoPly::SavePointCloudToPly() {
+
+//    err = TangoSupport_getLatestPointCloud(point_cloud_manager_, &point_cloud_vector.at(0));
+//    if (TANGO_SUCCESS != err) {
+//      LOGE("TangoSupport_getLatestPointCloud - error code: %d", err);
 //    }
 
-    if( access( file_path, F_OK ) != -1 ) {
+    if( access( save_file_path, F_OK ) != -1 ) {
       // file exists so clear it first since we will want appending for actual writes
-      fclose(fopen(file_path, "w"));
+      fclose(fopen(save_file_path, "w"));
     }
 
-    FILE* file = fopen(file_path, "a");
+    FILE* file = fopen(save_file_path, "a");
     if (NULL == file) {
       static char errorString[128];
-      sprintf(errorString, "Could Not Open File at %s", file_path);
+      sprintf(errorString, "Could Not Open File at %s", save_file_path);
       return errorString;
     }
 
     fprintf(file, "ply\n"
         "format ascii 1.0\n"
-        "element vertex %u\n"
+        "element vertex %lu\n"
         "property float32 x\n"
         "property float32 y\n"
         "property float32 z\n"
-        "end_header\n", totalSize);
+        "end_header\n", (unsigned long)point_cloud_vector.size());
 
     // time to write in the body
-    for (auto point_cloud : point_cloud_vector) {
-      for (uint32_t i = 0; i < point_cloud->num_points; i++) {
-        if (point_cloud->points[i][3] > 0.5f) {
-          fprintf(file, "%.3f %.3f %.3f\n",
-                  point_cloud->points[i][0],
-                  point_cloud->points[i][1],
-                  point_cloud->points[i][2]);
-        }
-      }
+    for (vertex_point point_cloud : point_cloud_vector){
+      fprintf(file, "%.3f %.3f %.3f\n",
+              point_cloud.x,
+              point_cloud.y,
+              point_cloud.z);
     }
 
     fclose(file);
-    return file_path;
+    LOGI("Successfully saved PLY file!");
+    return save_file_path;
   }
 
   void DracoPly::GetPointCloud(TangoPointCloud* point_cloud) {

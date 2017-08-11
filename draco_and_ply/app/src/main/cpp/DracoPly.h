@@ -64,7 +64,13 @@ namespace draco {
     // Called when new new point cloud data is available from the Tango Service.
     void OnPointCloudAvailable(const TangoPointCloud* point_cloud);
 
-    const char* SavePointCloudToPly(int frames, const char* directory);
+    // used to save directory NDK can save extracted from Java layer
+    void SetSaveFileDirectory(const char* directory);
+
+    // Sets off frame count to have point cloud manager add to vector
+    void SetFrameCount(uint32_t frames);
+
+    const char* SavePointCloudToPly();
 
     // used to get PointCloud file
     void GetPointCloud(TangoPointCloud* point_cloud);
@@ -77,7 +83,19 @@ namespace draco {
     // Point data manager to hold state
     TangoSupportPointCloudManager* point_cloud_manager_;
 
-    std::vector<TangoPointCloud*> point_cloud_vector;
+    // Directory to save files out to
+    char save_file_path[256];
+
+    typedef struct {
+      float x;
+      float y;
+      float z;
+    } vertex_point;
+
+    std::vector<vertex_point> point_cloud_vector;
+
+    // counts down to zero and keeps appending points while non-zero
+    int remaining_frames;
   };
 }  // namespace draco
 
