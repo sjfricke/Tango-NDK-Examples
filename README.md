@@ -24,11 +24,26 @@ This is a set of examples projects of how to use Google Tango NDK in various way
 
 ## List of demos
 
-### [UI_interface](./UI_interface)
+### [UI interface](./UI_interface)
 * The idea behind this is to show how to get a UI interfacing with your logic in the NDK layer.
 * This really is good example if trying to understand how JNI works and sending data back and forth.
 
-### [OpenCL_PointCloud](./OpenCL_PointCloud)
+### [OpenCL PointCloud](./OpenCL_PointCloud)
 * This demo is to help get OpenCL intergrated with Tango.
 * Use point cloud data as an example, but can apply OpenCL kernels to way more ideas
 * OpenCL is tricky since its not a native support library, more info in the project README on subject
+
+### [Depth Viberation](./Depth_Viberation)
+* This demo shows how to have your phone viberation by how close your phone is to an object
+* Also shows how to have an async callback function from the C++ layer to Java
+** Since Viberation is only an SDK feature we need to be able to call the Java based function from C++ good anytime
+
+### [Draco and Ply](./draco_and_ply)
+* **NOT DONE**
+** Currently have ply saving done, need to figure out how to incorperate draco to ndk
+* A demo to show how to save a file into a .ply or .draco file and transfer it to a server
+
+### [RGBA Data](./RGBA_Data)
+* **NOT DONE** (But almost, just needs polishing)
+** A demo to show how to get an RGBA pixel buffer from Tango Frame
+** Might suggest using the Camera2 API as well
